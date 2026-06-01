@@ -13,24 +13,7 @@ import validationOptions from './utils/validation-options';
 import { AllConfigType } from './config/config.type';
 import { ResolvePromisesInterceptor } from './utils/serializer.interceptor';
 
-import { SeedModule } from './database/seeds/relational/seed.module';
-import { RoleSeedService } from './database/seeds/relational/role/role-seed.service';
-import { StatusSeedService } from './database/seeds/relational/status/status-seed.service';
-
 async function bootstrap() {
-  // --- TEMPORARY SEED LOGIC ---
-  try {
-    console.log('Running database seeds on startup...');
-    const seedApp = await NestFactory.create(SeedModule);
-    await seedApp.get(RoleSeedService).run();
-    await seedApp.get(StatusSeedService).run();
-    await seedApp.close();
-    console.log('Database seeded successfully!');
-  } catch (e) {
-    console.error('Seeding error:', e);
-  }
-  // -----------------------------
-
   const app = await NestFactory.create(AppModule, { cors: true });
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   const configService = app.get(ConfigService<AllConfigType>);
