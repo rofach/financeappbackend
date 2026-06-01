@@ -172,17 +172,19 @@ export class AuthService {
   }
 
   async register(dto: AuthRegisterLoginDto): Promise<void> {
-    const user = await this.usersService.create({
+    await this.usersService.create({
       ...dto,
       email: dto.email,
       role: {
         id: RoleEnum.user,
       },
       status: {
-        id: StatusEnum.inactive,
+        id: StatusEnum.active, // temp
       },
     });
 
+    // temp disabled
+    /*
     const hash = await this.jwtService.signAsync(
       {
         confirmEmailUserId: user.id,
@@ -203,6 +205,7 @@ export class AuthService {
         hash,
       },
     });
+    */
   }
 
   async confirmEmail(hash: string): Promise<void> {
