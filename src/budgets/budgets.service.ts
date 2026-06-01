@@ -13,7 +13,7 @@ export class BudgetsService {
     private readonly budgetRepository: BudgetRepository,
     private readonly categoriesService: CategoriesService,
     private readonly transactionRepository: TransactionRepository,
-  ) { }
+  ) {}
 
   private async enrichBudgetsWithSpentAmounts(
     budgets: Budget[],
