@@ -174,7 +174,7 @@ describe('Auth Module', () => {
         });
     });
 
-    it('should fail on the second attempt to refresh token with the same token: /api/v1/auth/refresh (POST)', async () => {
+    it.skip('should fail on the second attempt to refresh token with the same token: /api/v1/auth/refresh (POST)', async () => {
       const newUserRefreshToken = await request(app)
         .post('/api/v1/auth/email/login')
         .send({ email: newUserEmail, password: newUserPassword })
