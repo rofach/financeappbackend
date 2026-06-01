@@ -1,0 +1,8 @@
+{
+  "notFound": "Category with id {id} not found",
+  "noAccess": "You do not have access to this category",
+  "cannotEditGlobal": "Cannot edit global categories",
+  "cannotEditNoAccess": "You do not have access to edit this category",
+  "cannotDeleteGlobal": "Cannot delete global categories",
+  "cannotDeleteNoAccess": "You do not have access to delete this category"
+}

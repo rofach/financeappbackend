@@ -2,6 +2,7 @@ import { FileEntity } from '../../../../../files/infrastructure/persistence/rela
 import { FileMapper } from '../../../../../files/infrastructure/persistence/relational/mappers/file.mapper';
 import { RoleEntity } from '../../../../../roles/infrastructure/persistence/relational/entities/role.entity';
 import { StatusEntity } from '../../../../../statuses/infrastructure/persistence/relational/entities/status.entity';
+import { CurrencyEntity } from '../../../../../currencies/infrastructure/persistence/relational/entities/currency.entity';
 import { User } from '../../../../domain/user';
 import { UserEntity } from '../entities/user.entity';
 
@@ -19,6 +20,9 @@ export class UserMapper {
       domainEntity.photo = FileMapper.toDomain(raw.photo);
     }
     domainEntity.role = raw.role;
+    if (raw.baseCurrency) {
+      domainEntity.baseCurrency = raw.baseCurrency;
+    }
     domainEntity.status = raw.status;
     domainEntity.createdAt = raw.createdAt;
     domainEntity.updatedAt = raw.updatedAt;
@@ -32,6 +36,13 @@ export class UserMapper {
     if (domainEntity.role) {
       role = new RoleEntity();
       role.id = Number(domainEntity.role.id);
+    }
+
+    let baseCurrency: CurrencyEntity | undefined = undefined;
+
+    if (domainEntity.baseCurrency) {
+      baseCurrency = new CurrencyEntity();
+      baseCurrency.code = domainEntity.baseCurrency.code;
     }
 
     let photo: FileEntity | undefined | null = undefined;
@@ -52,8 +63,8 @@ export class UserMapper {
     }
 
     const persistenceEntity = new UserEntity();
-    if (domainEntity.id && typeof domainEntity.id === 'number') {
-      persistenceEntity.id = domainEntity.id;
+    if (domainEntity.id !== undefined && domainEntity.id !== null) {
+      persistenceEntity.id = Number(domainEntity.id);
     }
     persistenceEntity.email = domainEntity.email;
     persistenceEntity.password = domainEntity.password;
@@ -62,6 +73,7 @@ export class UserMapper {
     persistenceEntity.firstName = domainEntity.firstName;
     persistenceEntity.lastName = domainEntity.lastName;
     persistenceEntity.photo = photo;
+    persistenceEntity.baseCurrency = baseCurrency;
     persistenceEntity.role = role;
     persistenceEntity.status = status;
     persistenceEntity.createdAt = domainEntity.createdAt;

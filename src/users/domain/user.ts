@@ -5,6 +5,7 @@ import { Status } from '../../statuses/domain/status';
 import { ApiProperty } from '@nestjs/swagger';
 import databaseConfig from '../../database/config/database.config';
 import { DatabaseConfig } from '../../database/config/database-config.type';
+import { Currency } from '../../currencies/domain/currency';
 
 // <database-block>
 const idType = (databaseConfig() as DatabaseConfig).isDocumentDatabase
@@ -63,6 +64,11 @@ export class User {
     type: () => Role,
   })
   role?: Role | null;
+
+  @ApiProperty({
+    type: () => Currency,
+  })
+  baseCurrency?: Currency | null;
 
   @ApiProperty({
     type: () => Status,

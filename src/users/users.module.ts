@@ -1,7 +1,4 @@
-import {
-  // common
-  Module,
-} from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { UsersController } from './users.controller';
 
@@ -20,11 +17,7 @@ const infrastructurePersistenceModule = (databaseConfig() as DatabaseConfig)
 // </database-block>
 
 @Module({
-  imports: [
-    // import modules, etc.
-    infrastructurePersistenceModule,
-    FilesModule,
-  ],
+  imports: [infrastructurePersistenceModule, FilesModule],
   controllers: [UsersController],
   providers: [UsersService],
   exports: [UsersService, infrastructurePersistenceModule],

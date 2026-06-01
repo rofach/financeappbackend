@@ -6,8 +6,6 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import ms from 'ms';
-import crypto from 'crypto';
-import { randomStringGenerator } from '@nestjs/common/utils/random-string-generator.util';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { AuthEmailLoginDto } from './dto/auth-email-login.dto';
@@ -83,21 +81,11 @@ export class AuthService {
       });
     }
 
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
       id: user.id,
       role: user.role,
-      sessionId: session.id,
-      hash,
+      sessionId: user.id,
+      hash: '',
     });
 
     return {
@@ -164,16 +152,6 @@ export class AuthService {
       });
     }
 
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
-
-    const session = await this.sessionService.create({
-      user,
-      hash,
-    });
-
     const {
       token: jwtToken,
       refreshToken,
@@ -181,8 +159,8 @@ export class AuthService {
     } = await this.getTokensData({
       id: user.id,
       role: user.role,
-      sessionId: session.id,
-      hash,
+      sessionId: user.id,
+      hash: '',
     });
 
     return {
@@ -384,10 +362,6 @@ export class AuthService {
 
     user.password = password;
 
-    await this.sessionService.deleteByUserId({
-      userId: user.id,
-    });
-
     await this.usersService.update(user.id, user);
   }
 
@@ -442,10 +416,6 @@ export class AuthService {
           },
         });
       } else {
-        await this.sessionService.deleteByUserIdWithExclude({
-          userId: currentUser.id,
-          excludeSessionId: userJwtPayload.sessionId,
-        });
       }
     }
 
@@ -495,33 +465,19 @@ export class AuthService {
   async refreshToken(
     data: Pick<JwtRefreshPayloadType, 'sessionId' | 'hash'>,
   ): Promise<Omit<LoginResponseDto, 'user'>> {
-    const hash = crypto
-      .createHash('sha256')
-      .update(randomStringGenerator())
-      .digest('hex');
+    const user = await this.usersService.findById(data.sessionId as any);
 
-    const session = await this.sessionService.updateByHash(
-      { id: data.sessionId, hash: data.hash },
-      { hash },
-    );
-
-    if (!session) {
-      throw new UnauthorizedException();
-    }
-
-    const user = await this.usersService.findById(session.user.id);
-
-    if (!user?.role) {
+    if (!user || !user.role) {
       throw new UnauthorizedException();
     }
 
     const { token, refreshToken, tokenExpires } = await this.getTokensData({
-      id: session.user.id,
+      id: user.id,
       role: {
         id: user.role.id,
       },
-      sessionId: session.id,
-      hash,
+      sessionId: user.id,
+      hash: '',
     });
 
     return {
@@ -535,8 +491,9 @@ export class AuthService {
     await this.usersService.remove(user.id);
   }
 
-  async logout(data: Pick<JwtRefreshPayloadType, 'sessionId'>) {
-    return this.sessionService.deleteById(data.sessionId);
+  async logout(data: Pick<JwtRefreshPayloadType, 'sessionId'>): Promise<void> {
+    void data.sessionId;
+    await Promise.resolve();
   }
 
   private async getTokensData(data: {
