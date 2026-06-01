@@ -18,7 +18,7 @@ export class CategoriesService {
     const user = new User();
     user.id = userId;
 
-    return this.categoryRepository.create({
+    return await this.categoryRepository.create({
       ...createCategoryDto,
       nameEn: createCategoryDto.nameEn ?? null,
       nameUk: createCategoryDto.nameUk ?? null,
@@ -26,8 +26,11 @@ export class CategoriesService {
     });
   }
 
-  findManyWithPagination(options: IPaginationOptions, userId: string) {
-    return this.categoryRepository.findManyWithPagination(options, userId);
+  async findManyWithPagination(options: IPaginationOptions, userId: string) {
+    return await this.categoryRepository.findManyWithPagination(
+      options,
+      userId,
+    );
   }
 
   async findOne(id: string, userId: string) {
@@ -76,7 +79,7 @@ export class CategoriesService {
       throw new ForbiddenException(msg);
     }
 
-    return this.categoryRepository.update(id, updateCategoryDto);
+    return await this.categoryRepository.update(id, updateCategoryDto);
   }
 
   async remove(id: string, userId: string) {
@@ -102,6 +105,6 @@ export class CategoriesService {
       throw new ForbiddenException(msg);
     }
 
-    return this.categoryRepository.remove(id);
+    return await this.categoryRepository.remove(id);
   }
 }

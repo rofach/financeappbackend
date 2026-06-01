@@ -369,7 +369,7 @@ export class AuthService {
   }
 
   async me(userJwtPayload: JwtPayloadType): Promise<NullableType<User>> {
-    return this.usersService.findById(userJwtPayload.id);
+    return await this.usersService.findById(userJwtPayload.id);
   }
 
   async update(
@@ -462,7 +462,7 @@ export class AuthService {
 
     await this.usersService.update(userJwtPayload.id, userDto);
 
-    return this.usersService.findById(userJwtPayload.id);
+    return await this.usersService.findById(userJwtPayload.id);
   }
 
   async refreshToken(

@@ -49,17 +49,17 @@ export class RecurringPaymentsService {
     payment.nextExecuteDate = beginDate;
     payment.isActive = true;
 
-    return this.recurringPaymentsRepository.create(payment);
+    return await this.recurringPaymentsRepository.create(payment);
   }
 
-  findAll() {
-    return this.recurringPaymentsRepository.findAllWithPagination({
+  async findAll() {
+    return await this.recurringPaymentsRepository.findAllWithPagination({
       paginationOptions: { page: 1, limit: 100 },
     });
   }
 
-  findById(id: RecurringPayments['id']) {
-    return this.recurringPaymentsRepository.findById(id);
+  async findById(id: RecurringPayments['id']) {
+    return await this.recurringPaymentsRepository.findById(id);
   }
 
   async update(
@@ -84,14 +84,14 @@ export class RecurringPaymentsService {
       if (category) payload.category = category;
     }
 
-    return this.recurringPaymentsRepository.update(id, payload);
+    return await this.recurringPaymentsRepository.update(id, payload);
   }
 
   async remove(id: RecurringPayments['id'], userId: string) {
     const payment = await this.findById(id);
     if (!payment || payment.user.id !== userId)
       throw new NotFoundException('Payment not found');
-    return this.recurringPaymentsRepository.remove(id);
+    return await this.recurringPaymentsRepository.remove(id);
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)

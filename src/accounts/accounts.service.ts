@@ -43,11 +43,11 @@ export class AccountsService {
     account.balance = createAccountDto.balance ?? 0.0;
     account.user = user;
 
-    return this.accountRepository.create(account);
+    return await this.accountRepository.create(account);
   }
 
   async findAll(userId: string): Promise<Account[]> {
-    return this.accountRepository.findMany(userId);
+    return await this.accountRepository.findMany(userId);
   }
 
   async findOne(userId: string, id: string): Promise<Account> {

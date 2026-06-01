@@ -56,7 +56,7 @@ export class TransactionsService {
       }
     }
 
-    return this.transactionRepository.create({
+    return await this.transactionRepository.create({
       user,
       account,
       category,
@@ -68,15 +68,18 @@ export class TransactionsService {
     });
   }
 
-  findAll(
+  async findAll(
     userId: string,
     pagination: { limit: number; offset: number; accountId?: string },
   ) {
-    return this.transactionRepository.findAllWithPagination(userId, pagination);
+    return await this.transactionRepository.findAllWithPagination(
+      userId,
+      pagination,
+    );
   }
 
-  findOne(userId: string, id: string) {
-    return this.transactionRepository.findOne(userId, id);
+  async findOne(userId: string, id: string) {
+    return await this.transactionRepository.findOne(userId, id);
   }
 
   async update(
@@ -144,10 +147,10 @@ export class TransactionsService {
       payload.baseAmount = baseAmount;
     }
 
-    return this.transactionRepository.update(userId, id, payload);
+    return await this.transactionRepository.update(userId, id, payload);
   }
 
-  remove(userId: string, id: string) {
-    return this.transactionRepository.softDelete(userId, id);
+  async remove(userId: string, id: string) {
+    return await this.transactionRepository.softDelete(userId, id);
   }
 }

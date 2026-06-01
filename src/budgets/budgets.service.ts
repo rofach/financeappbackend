@@ -13,33 +13,32 @@ export class BudgetsService {
     private readonly budgetRepository: BudgetRepository,
     private readonly categoriesService: CategoriesService,
     private readonly transactionRepository: TransactionRepository,
-  ) {}
+  ) { }
 
   private async enrichBudgetsWithSpentAmounts(
     budgets: Budget[],
     userId: string,
   ): Promise<Budget[]> {
-    return Promise.all(
-      budgets.map(async (budget) => {
-        const endDate = new Date(budget.startDate);
-        if (budget.period === 1) {
-          endDate.setDate(endDate.getDate() + 7);
-        } else if (budget.period === 2) {
-          endDate.setMonth(endDate.getMonth() + 1);
-        } else if (budget.period === 3) {
-          endDate.setFullYear(endDate.getFullYear() + 1);
-        }
+    for (const budget of budgets) {
+      const endDate = new Date(budget.startDate);
+      if (budget.period === 1) {
+        endDate.setDate(endDate.getDate() + 7);
+      } else if (budget.period === 2) {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else if (budget.period === 3) {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
 
-        const spent = await this.transactionRepository.calculateSpentAmount(
-          userId,
-          budget.category.id,
-          budget.startDate,
-          endDate,
-        );
-        budget.spentAmount = spent;
-        return budget;
-      }),
-    );
+      const spent = await this.transactionRepository.calculateSpentAmount(
+        userId,
+        budget.category.id,
+        budget.startDate,
+        endDate,
+      );
+      budget.spentAmount = spent;
+    }
+
+    return budgets;
   }
 
   async create(createBudgetDto: CreateBudgetDto, userId: string) {
@@ -62,12 +61,12 @@ export class BudgetsService {
     newBudget.user = user;
     newBudget.category = category;
 
-    return this.budgetRepository.create(newBudget);
+    return await this.budgetRepository.create(newBudget);
   }
 
   async findAll(userId: string) {
     const budgets = await this.budgetRepository.findAll(userId);
-    return this.enrichBudgetsWithSpentAmounts(budgets, userId);
+    return await this.enrichBudgetsWithSpentAmounts(budgets, userId);
   }
 
   async findByCategoryId(userId: string, categoryId: string) {
@@ -75,11 +74,11 @@ export class BudgetsService {
       userId,
       categoryId,
     );
-    return this.enrichBudgetsWithSpentAmounts(budgets, userId);
+    return await this.enrichBudgetsWithSpentAmounts(budgets, userId);
   }
 
-  findOne(userId: string, id: string) {
-    return this.budgetRepository.findById(id);
+  async findOne(userId: string, id: string) {
+    return await this.budgetRepository.findById(id);
   }
 
   async update(userId: string, id: string, updateBudgetDto: UpdateBudgetDto) {
@@ -107,7 +106,7 @@ export class BudgetsService {
       payload.category = category;
     }
 
-    return this.budgetRepository.update(id, payload);
+    return await this.budgetRepository.update(id, payload);
   }
 
   async remove(userId: string, id: string) {
@@ -115,6 +114,6 @@ export class BudgetsService {
     if (!budget || budget.user.id !== userId) {
       throw new NotFoundException('Budget not found');
     }
-    return this.budgetRepository.remove(id);
+    return await this.budgetRepository.remove(id);
   }
 }

@@ -122,4 +122,3 @@ Handles automated generation of transactions.
     *   `3` = Transfer
 
 ---
-*Generated based on codebase structure and domain models.*
