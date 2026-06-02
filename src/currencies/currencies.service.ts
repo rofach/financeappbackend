@@ -61,9 +61,7 @@ export class CurrenciesService {
         await this.currencyRateRepository.save(rateRecord);
         return rates;
       } else {
-        throw new Error(
-          data['error-type'] || 'Failed to retrieve conversion rates',
-        );
+        throw new Error('Failed to retrieve conversion rates');
       }
     } catch (error) {
       console.error(error);
@@ -92,9 +90,7 @@ export class CurrenciesService {
     const data = await response.json();
 
     if (data.result !== 'success' || !data.supported_codes) {
-      throw new Error(
-        data['error-type'] || 'Failed to retrieve currency codes',
-      );
+      throw new Error('Failed to retrieve currency codes');
     }
 
     const currenciesToUpsert: Currency[] = data.supported_codes.map(

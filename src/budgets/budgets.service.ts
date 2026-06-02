@@ -16,7 +16,7 @@ export class BudgetsService {
     private readonly usersService: UsersService,
   ) {}
 
-  private async enrichBudgetsWithSpentAmounts(
+  private async getBudgetWithSpentAmount(
     budgets: Budget[],
     userId: string,
   ): Promise<Budget[]> {
@@ -69,7 +69,7 @@ export class BudgetsService {
 
   async findAll(userId: string) {
     const budgets = await this.budgetRepository.findAll(userId);
-    return await this.enrichBudgetsWithSpentAmounts(budgets, userId);
+    return await this.getBudgetWithSpentAmount(budgets, userId);
   }
 
   async findByCategoryId(userId: string, categoryId: string) {
@@ -77,7 +77,7 @@ export class BudgetsService {
       userId,
       categoryId,
     );
-    return await this.enrichBudgetsWithSpentAmounts(budgets, userId);
+    return await this.getBudgetWithSpentAmount(budgets, userId);
   }
 
   async findOne(userId: string, id: string) {
