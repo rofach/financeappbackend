@@ -9,6 +9,8 @@ import { AccountsModule } from '../accounts/accounts.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { UsersModule } from '../users/users.module';
+import { MailModule } from '../mail/mail.module';
+import { BudgetsModule } from '../budgets/budgets.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { UsersModule } from '../users/users.module';
     CategoriesModule,
     TransactionsModule,
     UsersModule,
+    MailModule,
+    BudgetsModule,
   ],
   controllers: [RecurringPaymentsController],
   providers: [RecurringPaymentsService],

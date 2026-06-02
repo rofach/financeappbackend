@@ -8,6 +8,8 @@ import { AccountsService } from '../accounts/accounts.service';
 import { CategoriesService } from '../categories/categories.service';
 import { TransactionsService } from '../transactions/transactions.service';
 import { UsersService } from '../users/users.service';
+import { MailService } from '../mail/mail.service';
+import { BudgetsService } from '../budgets/budgets.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
@@ -20,6 +22,8 @@ export class RecurringPaymentsService {
     private readonly categoriesService: CategoriesService,
     private readonly transactionsService: TransactionsService,
     private readonly usersService: UsersService,
+    private readonly mailService: MailService,
+    private readonly budgetsService: BudgetsService,
   ) {}
 
   async create(createDto: CreateRecurringPaymentsDto, userId: string) {
@@ -51,7 +55,26 @@ export class RecurringPaymentsService {
     payment.nextExecuteDate = beginDate;
     payment.isActive = true;
 
-    return await this.recurringPaymentsRepository.create(payment);
+    const savedPayment = await this.recurringPaymentsRepository.create(payment);
+
+    if (user.email) {
+      await this.mailService
+        .recurringPaymentCreated({
+          to: user.email,
+          data: {
+            amount: savedPayment.amount,
+            frequency: savedPayment.frequency,
+            nextDate: savedPayment.nextExecuteDate
+              ? savedPayment.nextExecuteDate.toISOString()
+              : 'Pending',
+          },
+        })
+        .catch((e) =>
+          this.logger.error(`Failed to send creation email: ${e.message}`),
+        );
+    }
+
+    return savedPayment;
   }
 
   async findAll() {
@@ -108,6 +131,17 @@ export class RecurringPaymentsService {
 
     for (const payment of duePayments) {
       try {
+        const userId = String(payment.user.id);
+        const oldAccount = await this.accountsService.findOne(
+          userId,
+          payment.account.id,
+        );
+        const oldBudgets = await this.budgetsService.findByCategoryId(
+          userId,
+          payment.category.id,
+        );
+        const oldBalance = oldAccount ? Number(oldAccount.balance) : 0;
+
         await this.transactionsService.create(
           {
             accountId: payment.account.id,
@@ -130,11 +164,81 @@ export class RecurringPaymentsService {
         await this.recurringPaymentsRepository.update(payment.id, {
           nextExecuteDate: nextDate,
         });
+
+        // Send processing email
+        if (payment.user.email) {
+          await this.mailService
+            .recurringPaymentProcessed({
+              to: payment.user.email,
+              data: {
+                accountName: payment.account.name,
+                amount: payment.amount,
+              },
+            })
+            .catch((e) =>
+              this.logger.error(
+                `Failed to send processing email: ${e.message}`,
+              ),
+            );
+        }
+
+        // Check balances and budgets
+        const newAccount = await this.accountsService.findOne(
+          userId,
+          payment.account.id,
+        );
+        if (newAccount) {
+          const newBalance = Number(newAccount.balance);
+          if (oldBalance >= 0 && newBalance < 0 && payment.user.email) {
+            await this.mailService
+              .balanceNegativeWarning({
+                to: payment.user.email,
+                data: {
+                  accountName: newAccount.name,
+                  balance: newBalance,
+                },
+              })
+              .catch((e) =>
+                this.logger.error(
+                  `Failed to send negative balance email: ${e.message}`,
+                ),
+              );
+          }
+        }
+
+        const newBudgets = await this.budgetsService.findByCategoryId(
+          userId,
+          payment.category.id,
+        );
+        for (const newBudget of newBudgets) {
+          const oldBudget = oldBudgets.find((b) => b.id === newBudget.id);
+          const oldSpent = oldBudget ? Number(oldBudget.spentAmount) : 0;
+          const newSpent = Number(newBudget.spentAmount);
+          const limit = Number(newBudget.limitAmount);
+
+          if (oldSpent <= limit && newSpent > limit && payment.user.email) {
+            await this.mailService
+              .budgetLimitHitWarning({
+                to: payment.user.email,
+                data: {
+                  categoryName: payment.category.nameEn || 'Unnamed',
+                  budgetLimit: limit,
+                  spentAmount: newSpent,
+                },
+              })
+              .catch((e) =>
+                this.logger.error(
+                  `Failed to send budget limit email: ${e.message}`,
+                ),
+              );
+          }
+        }
+
         this.logger.log(
           `Processed payment ${payment.id}, next execution: ${nextDate.toISOString()}`,
         );
-      } catch {
-        this.logger.error(`Failed to process payment ${payment.id}`);
+      } catch (err) {
+        this.logger.error(`Failed to process payment ${payment.id}`, err);
       }
     }
   }

@@ -166,4 +166,52 @@ export class MailService {
       },
     });
   }
+
+  async recurringPaymentCreated(
+    mailData: MailData<{ amount: number; frequency: string; nextDate: string }>,
+  ): Promise<void> {
+    const title = 'Recurring Payment Created';
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `A new recurring payment has been successfully created.\n\nAmount: ${mailData.data.amount}\nFrequency: ${mailData.data.frequency}\nNext Execute Date: ${mailData.data.nextDate}`,
+    });
+  }
+
+  async recurringPaymentProcessed(
+    mailData: MailData<{ accountName: string; amount: number }>,
+  ): Promise<void> {
+    const title = 'Recurring Payment Processed';
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `Your recurring payment has been successfully processed.\n\nAccount: ${mailData.data.accountName}\nAmount: ${mailData.data.amount}`,
+    });
+  }
+
+  async balanceNegativeWarning(
+    mailData: MailData<{ accountName: string; balance: number }>,
+  ): Promise<void> {
+    const title = 'Negative Balance Warning';
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `A recent recurring payment caused your account balance to fall below zero. Please review your account.\n\nAccount: ${mailData.data.accountName}\nCurrent Balance: ${mailData.data.balance}`,
+    });
+  }
+
+  async budgetLimitHitWarning(
+    mailData: MailData<{
+      categoryName: string;
+      budgetLimit: number;
+      spentAmount: number;
+    }>,
+  ): Promise<void> {
+    const title = 'Budget Limit Exceeded';
+    await this.mailerService.sendMail({
+      to: mailData.to,
+      subject: title,
+      text: `A recent recurring payment caused you to exceed your budget limit for a category.\n\nCategory: ${mailData.data.categoryName}\nBudget Limit: ${mailData.data.budgetLimit}\nSpent Amount: ${mailData.data.spentAmount}`,
+    });
+  }
 }
