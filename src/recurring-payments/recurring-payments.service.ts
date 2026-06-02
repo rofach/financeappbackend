@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { PaymentFrequency } from './enums/payment-frequency.enum';
 import { CreateRecurringPaymentsDto } from './dto/create-recurring-payments.dto';
 import { UpdateRecurringPaymentsDto } from './dto/update-recurring-payments.dto';
 import { RecurringPaymentsRepository } from './infrastructure/persistence/recurring-payments.repository';
@@ -121,14 +122,10 @@ export class RecurringPaymentsService {
           payment.user,
         );
 
-        const nextDate = new Date(payment.nextExecuteDate || new Date());
-        if (payment.frequency === 1) nextDate.setDate(nextDate.getDate() + 1);
-        else if (payment.frequency === 2)
-          nextDate.setDate(nextDate.getDate() + 7);
-        else if (payment.frequency === 3)
-          nextDate.setMonth(nextDate.getMonth() + 1);
-        else if (payment.frequency === 4)
-          nextDate.setFullYear(nextDate.getFullYear() + 1);
+        const nextDate = this.calculateNextExecutionDate(
+          payment.nextExecuteDate || new Date(),
+          payment.frequency,
+        );
 
         await this.recurringPaymentsRepository.update(payment.id, {
           nextExecuteDate: nextDate,
@@ -140,5 +137,28 @@ export class RecurringPaymentsService {
         this.logger.error(`Failed to process payment ${payment.id}`);
       }
     }
+  }
+
+  private calculateNextExecutionDate(
+    currentDate: Date,
+    frequency: PaymentFrequency,
+  ): Date {
+    const nextDate = new Date(currentDate);
+    switch (frequency) {
+      case PaymentFrequency.DAILY:
+        nextDate.setDate(nextDate.getDate() + 1);
+        break;
+      case PaymentFrequency.WEEKLY:
+        nextDate.setDate(nextDate.getDate() + 7);
+        break;
+      case PaymentFrequency.YEARLY:
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+        break;
+      case PaymentFrequency.MONTHLY:
+      default:
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        break;
+    }
+    return nextDate;
   }
 }

@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../users/domain/user';
 import { Account } from '../../accounts/domain/account';
 import { Category } from '../../categories/domain/category';
+import { PaymentFrequency } from '../enums/payment-frequency.enum';
 
 export class RecurringPayments {
   @ApiProperty({
@@ -26,7 +27,7 @@ export class RecurringPayments {
   amount: number;
 
   @ApiProperty()
-  frequency: number;
+  frequency: PaymentFrequency;
 
   @ApiProperty()
   beginDate: Date;

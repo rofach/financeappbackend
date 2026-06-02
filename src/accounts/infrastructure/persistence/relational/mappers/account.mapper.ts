@@ -8,8 +8,7 @@ export class AccountMapper {
     const domainEntity = new Account();
     domainEntity.id = raw.id;
     domainEntity.name = raw.name;
-    domainEntity.balance =
-      typeof raw.balance === 'string' ? parseFloat(raw.balance) : raw.balance;
+    domainEntity.balance = raw.balance;
 
     if (raw.user) {
       domainEntity.user = UserMapper.toDomain(raw.user);

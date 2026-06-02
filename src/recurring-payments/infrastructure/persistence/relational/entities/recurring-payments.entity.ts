@@ -13,6 +13,7 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 import { AccountEntity } from '../../../../../accounts/infrastructure/persistence/relational/entities/account.entity';
 import { CategoryEntity } from '../../../../../categories/infrastructure/persistence/relational/entities/category.entity';
+import { PaymentFrequency } from '../../../../enums/payment-frequency.enum';
 
 @Entity({
   name: 'recurring_payments',
@@ -56,8 +57,8 @@ export class RecurringPaymentsEntity extends EntityRelationalHelper {
   })
   amount: number;
 
-  @Column({ type: 'int' })
-  frequency: number;
+  @Column({ type: 'enum', enum: PaymentFrequency })
+  frequency: PaymentFrequency;
 
   @Column({ type: 'date' })
   beginDate: Date;

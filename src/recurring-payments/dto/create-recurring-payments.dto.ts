@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsNumber, IsString, IsDateString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsDateString,
+  IsEnum,
+} from 'class-validator';
+import { PaymentFrequency } from '../enums/payment-frequency.enum';
 
 export class CreateRecurringPaymentsDto {
   @IsString()
@@ -17,9 +24,9 @@ export class CreateRecurringPaymentsDto {
   @IsNotEmpty()
   amount: number;
 
-  @IsNumber()
+  @IsEnum(PaymentFrequency)
   @IsNotEmpty()
-  frequency: number;
+  frequency: PaymentFrequency;
 
   @IsDateString()
   @IsNotEmpty()
