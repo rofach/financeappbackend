@@ -6,17 +6,22 @@ import {
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CategoryRepository } from './infrastructure/persistence/category.repository';
-import { User } from '../users/domain/user';
+import { UsersService } from '../users/users.service';
 import { IPaginationOptions } from '../utils/types/pagination-options';
 import { I18nContext } from 'nestjs-i18n';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly categoryRepository: CategoryRepository) {}
+  constructor(
+    private readonly categoryRepository: CategoryRepository,
+    private readonly usersService: UsersService,
+  ) {}
 
   async create(createCategoryDto: CreateCategoryDto, userId: string) {
-    const user = new User();
-    user.id = userId;
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     return await this.categoryRepository.create({
       ...createCategoryDto,

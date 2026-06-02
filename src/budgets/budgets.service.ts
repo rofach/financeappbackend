@@ -4,7 +4,7 @@ import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { BudgetRepository } from './infrastructure/persistence/budget.repository';
 import { Budget } from './domain/budget';
 import { CategoriesService } from '../categories/categories.service';
-import { User } from '../users/domain/user';
+import { UsersService } from '../users/users.service';
 import { TransactionRepository } from '../transactions/infrastructure/persistence/transaction.repository';
 
 @Injectable()
@@ -13,6 +13,7 @@ export class BudgetsService {
     private readonly budgetRepository: BudgetRepository,
     private readonly categoriesService: CategoriesService,
     private readonly transactionRepository: TransactionRepository,
+    private readonly usersService: UsersService,
   ) {}
 
   private async enrichBudgetsWithSpentAmounts(
@@ -51,13 +52,15 @@ export class BudgetsService {
       throw new NotFoundException('Category not found');
     }
 
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     const newBudget = new Budget();
     newBudget.limitAmount = createBudgetDto.limitAmount;
     newBudget.period = createBudgetDto.period;
     newBudget.startDate = new Date(createBudgetDto.startDate);
-
-    const user = new User();
-    user.id = userId;
     newBudget.user = user;
     newBudget.category = category;
 

@@ -6,8 +6,8 @@ import { RecurringPayments } from './domain/recurring-payments';
 import { AccountsService } from '../accounts/accounts.service';
 import { CategoriesService } from '../categories/categories.service';
 import { TransactionsService } from '../transactions/transactions.service';
+import { UsersService } from '../users/users.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { User } from '../users/domain/user';
 
 @Injectable()
 export class RecurringPaymentsService {
@@ -18,6 +18,7 @@ export class RecurringPaymentsService {
     private readonly accountsService: AccountsService,
     private readonly categoriesService: CategoriesService,
     private readonly transactionsService: TransactionsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(createDto: CreateRecurringPaymentsDto, userId: string) {
@@ -33,8 +34,8 @@ export class RecurringPaymentsService {
     );
     if (!category) throw new NotFoundException('Category not found');
 
-    const user = new User();
-    user.id = userId;
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
 
     const beginDate = new Date(createDto.beginDate);
 

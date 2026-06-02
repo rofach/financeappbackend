@@ -5,9 +5,10 @@ import { CategoriesController } from './categories.controller';
 import { CategoryEntity } from './infrastructure/persistence/relational/entities/category.entity';
 import { CategoryRepository } from './infrastructure/persistence/category.repository';
 import { CategoryRelationalRepository } from './infrastructure/persistence/relational/repositories/category.repository';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CategoryEntity])],
+  imports: [TypeOrmModule.forFeature([CategoryEntity]), UsersModule],
   controllers: [CategoriesController],
   providers: [
     CategoriesService,

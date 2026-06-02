@@ -6,16 +6,17 @@ import {
 } from '@nestjs/common';
 import { AccountRepository } from './infrastructure/persistence/account.repository';
 import { CurrenciesService } from '../currencies/currencies.service';
+import { UsersService } from '../users/users.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { Account } from './domain/account';
-import { User } from '../users/domain/user';
 
 @Injectable()
 export class AccountsService {
   constructor(
     private readonly accountRepository: AccountRepository,
     private readonly currenciesService: CurrenciesService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(
@@ -34,8 +35,10 @@ export class AccountsService {
       });
     }
 
-    const user = new User();
-    user.id = userId;
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
     const account = new Account();
     account.name = createAccountDto.name;

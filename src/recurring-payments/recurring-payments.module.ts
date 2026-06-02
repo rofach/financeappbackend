@@ -8,6 +8,7 @@ import { RelationalRecurringPaymentsPersistenceModule } from './infrastructure/p
 import { AccountsModule } from '../accounts/accounts.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { TransactionsModule } from '../transactions/transactions.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TransactionsModule } from '../transactions/transactions.module';
     AccountsModule,
     CategoriesModule,
     TransactionsModule,
+    UsersModule,
   ],
   controllers: [RecurringPaymentsController],
   providers: [RecurringPaymentsService],

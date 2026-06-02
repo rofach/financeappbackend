@@ -6,7 +6,7 @@ import { BudgetEntity } from './infrastructure/persistence/relational/entities/b
 import { BudgetRepository } from './infrastructure/persistence/budget.repository';
 import { BudgetRelationalRepository } from './infrastructure/persistence/relational/repositories/budget.repository';
 import { CategoriesModule } from '../categories/categories.module';
-
+import { UsersModule } from '../users/users.module';
 import { RelationalTransactionPersistenceModule } from '../transactions/infrastructure/persistence/relational/relational-persistence.module';
 
 @Module({
@@ -14,6 +14,7 @@ import { RelationalTransactionPersistenceModule } from '../transactions/infrastr
     TypeOrmModule.forFeature([BudgetEntity]),
     CategoriesModule,
     RelationalTransactionPersistenceModule,
+    UsersModule,
   ],
   controllers: [BudgetsController],
   providers: [
