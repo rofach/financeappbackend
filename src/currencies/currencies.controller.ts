@@ -13,7 +13,6 @@ import { RolesGuard } from '../roles/roles.guard';
 import { RoleEnum } from '../roles/roles.enum';
 import { Post } from '@nestjs/common';
 
-@UseGuards(AuthGuard('jwt'))
 @Controller({
   path: 'currencies',
   version: '1',
@@ -28,13 +27,14 @@ export class CurrenciesController {
   }
 
   @Get('rates/:base')
+  @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async getRates(@Param('base') base: string): Promise<Record<string, number>> {
     return this.currenciesService.getExchangeRates(base);
   }
 
   @Post('sync')
-  @UseGuards(RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles(RoleEnum.admin)
   @HttpCode(HttpStatus.OK)
   async syncCurrencies() {
