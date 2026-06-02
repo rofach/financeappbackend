@@ -1,6 +1,7 @@
 import { User } from '../../users/domain/user';
 import { Account } from '../../accounts/domain/account';
 import { Category } from '../../categories/domain/category';
+import { TransactionType } from './transaction-type.enum';
 
 export class Transaction {
   id: string;
@@ -11,7 +12,7 @@ export class Transaction {
 
   category: Category;
 
-  type: number;
+  type: TransactionType;
 
   amount: number;
 

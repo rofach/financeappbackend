@@ -13,6 +13,7 @@ import { EntityRelationalHelper } from '../../../../../utils/relational-entity-h
 import { UserEntity } from '../../../../../users/infrastructure/persistence/relational/entities/user.entity';
 import { AccountEntity } from '../../../../../accounts/infrastructure/persistence/relational/entities/account.entity';
 import { CategoryEntity } from '../../../../../categories/infrastructure/persistence/relational/entities/category.entity';
+import { TransactionType } from '../../../../domain/transaction-type.enum';
 
 @Entity({
   name: 'transaction',
@@ -42,8 +43,8 @@ export class TransactionEntity extends EntityRelationalHelper {
   @Index()
   category: CategoryEntity;
 
-  @Column({ type: 'int' })
-  type: number;
+  @Column({ type: 'enum', enum: TransactionType })
+  type: TransactionType;
 
   @Column({
     type: 'decimal',

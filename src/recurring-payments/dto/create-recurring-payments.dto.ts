@@ -6,6 +6,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { PaymentFrequency } from '../enums/payment-frequency.enum';
+import { TransactionType } from '../../transactions/domain/transaction-type.enum';
 
 export class CreateRecurringPaymentsDto {
   @IsString()
@@ -16,9 +17,9 @@ export class CreateRecurringPaymentsDto {
   @IsNotEmpty()
   categoryId: string;
 
-  @IsNumber()
+  @IsEnum(TransactionType)
   @IsNotEmpty()
-  type: number;
+  type: TransactionType;
 
   @IsNumber()
   @IsNotEmpty()

@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { TransactionEntity } from '../entities/transaction.entity';
 import { AccountEntity } from '../../../../../accounts/infrastructure/persistence/relational/entities/account.entity';
+import { TransactionType } from '../../../../domain/transaction-type.enum';
 
 @EventSubscriber()
 export class TransactionSubscriber implements EntitySubscriberInterface<TransactionEntity> {
@@ -25,7 +26,7 @@ export class TransactionSubscriber implements EntitySubscriberInterface<Transact
     if (!entity) return 0;
     const amount = entity.amount || 0;
 
-    return entity.type === 1 ? amount : -amount;
+    return entity.type === TransactionType.INCOME ? amount : -amount;
   }
 
   private async updateAccountBalance(

@@ -6,6 +6,10 @@ import { AccountsService } from '../accounts/accounts.service';
 import { CategoriesService } from '../categories/categories.service';
 import { User } from '../users/domain/user';
 import { Transaction } from './domain/transaction';
+import {
+  TransactionPaginationOptions,
+  TransactionFilters,
+} from './infrastructure/persistence/transaction.repository';
 
 import { CurrenciesService } from '../currencies/currencies.service';
 import { UsersService } from '../users/users.service';
@@ -68,13 +72,17 @@ export class TransactionsService {
     });
   }
 
-  async findAll(
-    userId: string,
-    pagination: { limit: number; offset: number; accountId?: string },
-  ) {
+  async findAll(userId: string, pagination: TransactionPaginationOptions) {
     return await this.transactionRepository.findAllWithPagination(
       userId,
       pagination,
+    );
+  }
+
+  async getStatistics(userId: string, filters: TransactionFilters) {
+    return await this.transactionRepository.aggregateStatistics(
+      userId,
+      filters,
     );
   }
 

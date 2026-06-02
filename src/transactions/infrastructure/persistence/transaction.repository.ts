@@ -1,4 +1,18 @@
 import { Transaction } from '../../domain/transaction';
+import { TransactionType } from '../../domain/transaction-type.enum';
+
+export interface TransactionFilters {
+  accountId?: string;
+  categoryId?: string;
+  type?: TransactionType;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export interface TransactionPaginationOptions extends TransactionFilters {
+  limit: number;
+  offset: number;
+}
 
 export abstract class TransactionRepository {
   abstract create(
@@ -7,8 +21,13 @@ export abstract class TransactionRepository {
 
   abstract findAllWithPagination(
     userId: string,
-    options: { limit: number; offset: number; accountId?: string },
+    options: TransactionPaginationOptions,
   ): Promise<Transaction[]>;
+
+  abstract aggregateStatistics(
+    userId: string,
+    filters: TransactionFilters,
+  ): Promise<{ totalIncome: number; totalExpense: number; netBalance: number }>;
 
   abstract findOne(userId: string, id: string): Promise<Transaction | null>;
 

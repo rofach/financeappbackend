@@ -16,6 +16,7 @@ import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { TransactionType } from './domain/transaction-type.enum';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller({
@@ -30,17 +31,43 @@ export class TransactionsController {
     return this.transactionsService.create(createTransactionDto, req.user);
   }
 
+  @Get('statistics')
+  getStatistics(
+    @Request() req,
+    @Query('accountId') accountId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('type') type?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.transactionsService.getStatistics(req.user.id, {
+      accountId,
+      categoryId,
+      type: type ? (type as TransactionType) : undefined,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    });
+  }
+
   @Get()
   findAll(
     @Request() req,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('accountId') accountId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('type') type?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
     return this.transactionsService.findAll(req.user.id, {
       limit,
       offset: (page - 1) * limit,
       accountId,
+      categoryId,
+      type: type ? (type as TransactionType) : undefined,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
     });
   }
 

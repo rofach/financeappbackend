@@ -4,6 +4,7 @@ import { User } from '../../users/domain/user';
 import { Account } from '../../accounts/domain/account';
 import { Category } from '../../categories/domain/category';
 import { PaymentFrequency } from '../enums/payment-frequency.enum';
+import { TransactionType } from '../../transactions/domain/transaction-type.enum';
 
 export class RecurringPayments {
   @ApiProperty({
@@ -21,7 +22,7 @@ export class RecurringPayments {
   category: Category;
 
   @ApiProperty()
-  type: number;
+  type: TransactionType;
 
   @ApiProperty()
   amount: number;

@@ -14,6 +14,7 @@ import { UserEntity } from '../../../../../users/infrastructure/persistence/rela
 import { AccountEntity } from '../../../../../accounts/infrastructure/persistence/relational/entities/account.entity';
 import { CategoryEntity } from '../../../../../categories/infrastructure/persistence/relational/entities/category.entity';
 import { PaymentFrequency } from '../../../../enums/payment-frequency.enum';
+import { TransactionType } from '../../../../../transactions/domain/transaction-type.enum';
 
 @Entity({
   name: 'recurring_payments',
@@ -43,8 +44,8 @@ export class RecurringPaymentsEntity extends EntityRelationalHelper {
   @Index()
   category: CategoryEntity;
 
-  @Column({ type: 'int' })
-  type: number;
+  @Column({ type: 'enum', enum: TransactionType })
+  type: TransactionType;
 
   @Column({
     type: 'decimal',

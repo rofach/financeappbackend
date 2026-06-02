@@ -5,7 +5,9 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsEnum,
 } from 'class-validator';
+import { TransactionType } from '../domain/transaction-type.enum';
 
 export class CreateTransactionDto {
   @IsNotEmpty()
@@ -17,8 +19,8 @@ export class CreateTransactionDto {
   categoryId: string;
 
   @IsNotEmpty()
-  @IsNumber()
-  type: number;
+  @IsEnum(TransactionType)
+  type: TransactionType;
 
   @IsNotEmpty()
   @IsNumber()
