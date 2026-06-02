@@ -137,8 +137,7 @@ export class RecurringPaymentsService {
           `Processed payment ${payment.id}, next execution: ${nextDate.toISOString()}`,
         );
       } catch {
-        this.logger.error(`Failed to process payment ${payment.id}`
-        );
+        this.logger.error(`Failed to process payment ${payment.id}`);
       }
     }
   }
