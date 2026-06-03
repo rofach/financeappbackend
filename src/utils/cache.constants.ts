@@ -1,0 +1,8 @@
+const SECOND = 1;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+export const DEFAULT_CACHE_TIME_SECONDS = 5 * MINUTE;
+export const CACHE_KEYS_TRACKING_TIME_SECONDS = 30 * DAY;
+export const CURRENCY_CACHE_TIME_SECONDS = 3 * DAY;

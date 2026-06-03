@@ -49,6 +49,7 @@ const infrastructureDatabaseModule = (databaseConfig() as DatabaseConfig)
 // </database-block>
 
 import { RecurringPaymentsModule } from './recurring-payments/recurring-payments.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -107,6 +108,7 @@ import { RecurringPaymentsModule } from './recurring-payments/recurring-payments
     TransactionsModule,
     CurrenciesModule,
     BudgetsModule,
+    RedisModule,
   ],
 })
 export class AppModule {}

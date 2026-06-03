@@ -1,17 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Inject } from '@nestjs/common';
+
 import { CurrencyRepository } from './infrastructure/persistence/currency.repository';
 import { Currency } from './domain/currency';
 import { NullableType } from '../utils/types/nullable.type';
-import { CurrencyRateEntity } from './infrastructure/persistence/relational/entities/currency-rate.entity';
+
+import { CURRENCY_CACHE_TIME_SECONDS } from '../utils/cache.constants';
 
 @Injectable()
 export class CurrenciesService {
   constructor(
     private readonly currencyRepository: CurrencyRepository,
-    @InjectRepository(CurrencyRateEntity)
-    private readonly currencyRateRepository: Repository<CurrencyRateEntity>,
+    @Inject('REDIS_CLIENT') private readonly redisClient: any,
   ) {}
 
   create(currency: Currency): Promise<Currency> {
@@ -28,17 +27,12 @@ export class CurrenciesService {
 
   async getExchangeRates(baseCode: string): Promise<Record<string, number>> {
     const uppercaseBase = baseCode.toUpperCase();
-    const cacheDuration = 3 * 24 * 60 * 60 * 1000;
+    const cacheKey = `exchange_rates_${uppercaseBase}`;
 
-    const cachedRate = await this.currencyRateRepository.findOne({
-      where: { baseCode: uppercaseBase },
-    });
-
-    if (cachedRate) {
-      const age = Date.now() - new Date(cachedRate.updatedAt).getTime();
-      if (age < cacheDuration) {
-        return cachedRate.rates;
-      }
+    const cached = await this.redisClient.get(cacheKey);
+    const redisCachedRates = cached ? JSON.parse(cached) : null;
+    if (redisCachedRates) {
+      return redisCachedRates;
     }
 
     try {
@@ -52,24 +46,16 @@ export class CurrenciesService {
       if (data.result === 'success' && data.conversion_rates) {
         const rates = data.conversion_rates;
 
-        const rateRecord = this.currencyRateRepository.create({
-          baseCode: uppercaseBase,
-          rates,
-          updatedAt: new Date(),
+        await this.redisClient.set(cacheKey, JSON.stringify(rates), {
+          EX: CURRENCY_CACHE_TIME_SECONDS,
         });
 
-        await this.currencyRateRepository.save(rateRecord);
         return rates;
       } else {
         throw new Error('Failed to retrieve conversion rates');
       }
     } catch (error) {
       console.error(error);
-
-      if (cachedRate) {
-        return cachedRate.rates;
-      }
-
       throw new Error(
         `Failed to fetch live exchange rates for ${uppercaseBase}: ${error instanceof Error ? error.message : String(error)}`,
       );

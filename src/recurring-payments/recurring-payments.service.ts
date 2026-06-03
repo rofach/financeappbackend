@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject } from '@nestjs/common';
 import { PaymentFrequency } from './enums/payment-frequency.enum';
 import { CreateRecurringPaymentsDto } from './dto/create-recurring-payments.dto';
 import { UpdateRecurringPaymentsDto } from './dto/update-recurring-payments.dto';
@@ -11,6 +11,10 @@ import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import { BudgetsService } from '../budgets/budgets.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import {
+  DEFAULT_CACHE_TIME_SECONDS,
+  CACHE_KEYS_TRACKING_TIME_SECONDS,
+} from '../utils/cache.constants';
 
 @Injectable()
 export class RecurringPaymentsService {
@@ -24,7 +28,28 @@ export class RecurringPaymentsService {
     private readonly usersService: UsersService,
     private readonly mailService: MailService,
     private readonly budgetsService: BudgetsService,
+    @Inject('REDIS_CLIENT') private readonly redisClient: any,
   ) {}
+
+  private async trackCacheKey(cacheKey: string) {
+    const trackingSetKey = `recurring_payments_keys`;
+    await this.redisClient.sAdd(trackingSetKey, cacheKey);
+    await this.redisClient.expire(
+      trackingSetKey,
+      CACHE_KEYS_TRACKING_TIME_SECONDS,
+    );
+  }
+
+  async clearCache(): Promise<void> {
+    const trackingSetKey = `recurring_payments_keys`;
+    const cachedKeys: string[] =
+      await this.redisClient.sMembers(trackingSetKey);
+
+    if (cachedKeys.length > 0) {
+      await this.redisClient.del(cachedKeys);
+      await this.redisClient.del(trackingSetKey);
+    }
+  }
 
   async create(createDto: CreateRecurringPaymentsDto, userId: string) {
     const account = await this.accountsService.findOne(
@@ -74,17 +99,40 @@ export class RecurringPaymentsService {
         );
     }
 
+    await this.clearCache();
     return savedPayment;
   }
 
   async findAll() {
-    return await this.recurringPaymentsRepository.findAllWithPagination({
-      paginationOptions: { page: 1, limit: 100 },
+    const cacheKey = `recurring_payments_all`;
+    const cached = await this.redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const payments =
+      await this.recurringPaymentsRepository.findAllWithPagination({
+        paginationOptions: { page: 1, limit: 100 },
+      });
+
+    await this.redisClient.set(cacheKey, JSON.stringify(payments), {
+      EX: DEFAULT_CACHE_TIME_SECONDS,
     });
+    await this.trackCacheKey(cacheKey);
+    return payments;
   }
 
   async findById(id: RecurringPayments['id']) {
-    return await this.recurringPaymentsRepository.findById(id);
+    const cacheKey = `recurring_payment_${id}`;
+    const cached = await this.redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const payment = await this.recurringPaymentsRepository.findById(id);
+    if (!payment) return payment;
+
+    await this.redisClient.set(cacheKey, JSON.stringify(payment), {
+      EX: DEFAULT_CACHE_TIME_SECONDS,
+    });
+    await this.trackCacheKey(cacheKey);
+    return payment;
   }
 
   async update(
@@ -109,14 +157,21 @@ export class RecurringPaymentsService {
       if (category) payload.category = category;
     }
 
-    return await this.recurringPaymentsRepository.update(id, payload);
+    const updatedPayment = await this.recurringPaymentsRepository.update(
+      id,
+      payload,
+    );
+    await this.clearCache();
+    return updatedPayment;
   }
 
   async remove(id: RecurringPayments['id'], userId: string) {
     const payment = await this.findById(id);
     if (!payment || payment.user.id !== userId)
       throw new NotFoundException('Payment not found');
-    return await this.recurringPaymentsRepository.remove(id);
+
+    await this.recurringPaymentsRepository.remove(id);
+    await this.clearCache();
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -188,7 +243,7 @@ export class RecurringPaymentsService {
         if (newAccount) {
           const newBalance = Number(newAccount.balance);
           if (oldBalance >= 0 && newBalance < 0 && payment.user.email) {
-            await this.mailService
+            this.mailService
               .balanceNegativeWarning({
                 to: payment.user.email,
                 data: {

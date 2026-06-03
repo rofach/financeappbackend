@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionRepository } from './infrastructure/persistence/transaction.repository';
@@ -13,6 +13,11 @@ import {
 
 import { CurrenciesService } from '../currencies/currencies.service';
 import { UsersService } from '../users/users.service';
+import { BudgetsService } from '../budgets/budgets.service';
+import {
+  DEFAULT_CACHE_TIME_SECONDS,
+  CACHE_KEYS_TRACKING_TIME_SECONDS,
+} from '../utils/cache.constants';
 
 @Injectable()
 export class TransactionsService {
@@ -22,7 +27,29 @@ export class TransactionsService {
     private readonly categoriesService: CategoriesService,
     private readonly currenciesService: CurrenciesService,
     private readonly usersService: UsersService,
+    private readonly budgetsService: BudgetsService,
+    @Inject('REDIS_CLIENT') private readonly redisClient: any,
   ) {}
+
+  private async trackCacheKey(userId: string, cacheKey: string) {
+    const trackingSetKey = `transactions_keys_${userId}`;
+    await this.redisClient.sAdd(trackingSetKey, cacheKey);
+    await this.redisClient.expire(
+      trackingSetKey,
+      CACHE_KEYS_TRACKING_TIME_SECONDS,
+    );
+  }
+
+  async clearCache(userId: string): Promise<void> {
+    const trackingSetKey = `transactions_keys_${userId}`;
+    const cachedKeys: string[] =
+      await this.redisClient.sMembers(trackingSetKey);
+
+    if (cachedKeys.length > 0) {
+      await this.redisClient.del(cachedKeys);
+      await this.redisClient.del(trackingSetKey);
+    }
+  }
 
   async create(createTransactionDto: CreateTransactionDto, user: User) {
     const account = await this.accountsService.findOne(
@@ -60,7 +87,7 @@ export class TransactionsService {
       }
     }
 
-    return await this.transactionRepository.create({
+    const createdTransaction = await this.transactionRepository.create({
       user,
       account,
       category,
@@ -70,20 +97,46 @@ export class TransactionsService {
       date: new Date(createTransactionDto.date),
       note: createTransactionDto.note || null,
     });
+
+    await this.clearCache(user.id as string);
+    await this.accountsService.clearCache(user.id as string);
+    await this.budgetsService.clearCache(user.id as string);
+
+    return createdTransaction;
   }
 
   async findAll(userId: string, pagination: TransactionPaginationOptions) {
-    return await this.transactionRepository.findAllWithPagination(
+    const cacheKey = `transactions_user_${userId}:all:${JSON.stringify(pagination)}`;
+    const cached = await this.redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const transactions = await this.transactionRepository.findAllWithPagination(
       userId,
       pagination,
     );
+
+    await this.redisClient.set(cacheKey, JSON.stringify(transactions), {
+      EX: DEFAULT_CACHE_TIME_SECONDS,
+    });
+    await this.trackCacheKey(userId, cacheKey);
+    return transactions;
   }
 
   async getStatistics(userId: string, filters: TransactionFilters) {
-    return await this.transactionRepository.aggregateStatistics(
+    const cacheKey = `transactions_user_${userId}:stats:${JSON.stringify(filters)}`;
+    const cached = await this.redisClient.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+
+    const stats = await this.transactionRepository.aggregateStatistics(
       userId,
       filters,
     );
+
+    await this.redisClient.set(cacheKey, JSON.stringify(stats), {
+      EX: DEFAULT_CACHE_TIME_SECONDS,
+    });
+    await this.trackCacheKey(userId, cacheKey);
+    return stats;
   }
 
   async findOne(userId: string, id: string) {
@@ -155,10 +208,24 @@ export class TransactionsService {
       payload.baseAmount = baseAmount;
     }
 
-    return await this.transactionRepository.update(userId, id, payload);
+    const updatedTransaction = await this.transactionRepository.update(
+      userId,
+      id,
+      payload,
+    );
+
+    await this.clearCache(userId);
+    await this.accountsService.clearCache(userId);
+    await this.budgetsService.clearCache(userId);
+
+    return updatedTransaction;
   }
 
   async remove(userId: string, id: string) {
-    return await this.transactionRepository.softDelete(userId, id);
+    await this.transactionRepository.softDelete(userId, id);
+
+    await this.clearCache(userId);
+    await this.accountsService.clearCache(userId);
+    await this.budgetsService.clearCache(userId);
   }
 }
