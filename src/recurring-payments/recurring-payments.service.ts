@@ -165,7 +165,6 @@ export class RecurringPaymentsService {
           nextExecuteDate: nextDate,
         });
 
-        // Send processing email
         if (payment.user.email) {
           await this.mailService
             .recurringPaymentProcessed({
@@ -182,7 +181,6 @@ export class RecurringPaymentsService {
             );
         }
 
-        // Check balances and budgets
         const newAccount = await this.accountsService.findOne(
           userId,
           payment.account.id,

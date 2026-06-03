@@ -159,7 +159,6 @@ export class MailService {
         title: emailConfirmTitle,
         url: url.toString(),
         actionTitle: emailConfirmTitle,
-        app_name: this.configService.get('app.name', { infer: true }),
         text1,
         text2,
         text3,
@@ -170,33 +169,73 @@ export class MailService {
   async recurringPaymentCreated(
     mailData: MailData<{ amount: number; frequency: string; nextDate: string }>,
   ): Promise<void> {
-    const title = 'Recurring Payment Created';
+    const i18n = I18nContext.current();
+    let subject = 'Recurring Payment Created';
+    let text = `A new recurring payment has been successfully created.\n\nAmount: ${mailData.data.amount}\nFrequency: ${mailData.data.frequency}\nNext Execute Date: ${mailData.data.nextDate}`;
+
+    if (i18n) {
+      subject = await i18n.t('recurring-payments.createdTitle');
+      text = await i18n.t('recurring-payments.createdText', {
+        args: {
+          amount: mailData.data.amount,
+          frequency: mailData.data.frequency,
+          nextDate: mailData.data.nextDate,
+        },
+      });
+    }
+
     await this.mailerService.sendMail({
       to: mailData.to,
-      subject: title,
-      text: `A new recurring payment has been successfully created.\n\nAmount: ${mailData.data.amount}\nFrequency: ${mailData.data.frequency}\nNext Execute Date: ${mailData.data.nextDate}`,
+      subject,
+      text,
     });
   }
 
   async recurringPaymentProcessed(
     mailData: MailData<{ accountName: string; amount: number }>,
   ): Promise<void> {
-    const title = 'Recurring Payment Processed';
+    const i18n = I18nContext.current();
+    let subject = 'Recurring Payment Processed';
+    let text = `Your recurring payment has been successfully processed.\n\nAccount: ${mailData.data.accountName}\nAmount: ${mailData.data.amount}`;
+
+    if (i18n) {
+      subject = await i18n.t('recurring-payments.processedTitle');
+      text = await i18n.t('recurring-payments.processedText', {
+        args: {
+          accountName: mailData.data.accountName,
+          amount: mailData.data.amount,
+        },
+      });
+    }
+
     await this.mailerService.sendMail({
       to: mailData.to,
-      subject: title,
-      text: `Your recurring payment has been successfully processed.\n\nAccount: ${mailData.data.accountName}\nAmount: ${mailData.data.amount}`,
+      subject,
+      text,
     });
   }
 
   async balanceNegativeWarning(
     mailData: MailData<{ accountName: string; balance: number }>,
   ): Promise<void> {
-    const title = 'Negative Balance Warning';
+    const i18n = I18nContext.current();
+    let subject = 'Negative Balance Warning';
+    let text = `A recent recurring payment caused your account balance to fall below zero. Please review your account.\n\nAccount: ${mailData.data.accountName}\nCurrent Balance: ${mailData.data.balance}`;
+
+    if (i18n) {
+      subject = await i18n.t('recurring-payments.negativeWarningTitle');
+      text = await i18n.t('recurring-payments.negativeWarningText', {
+        args: {
+          accountName: mailData.data.accountName,
+          balance: mailData.data.balance,
+        },
+      });
+    }
+
     await this.mailerService.sendMail({
       to: mailData.to,
-      subject: title,
-      text: `A recent recurring payment caused your account balance to fall below zero. Please review your account.\n\nAccount: ${mailData.data.accountName}\nCurrent Balance: ${mailData.data.balance}`,
+      subject,
+      text,
     });
   }
 
@@ -207,11 +246,25 @@ export class MailService {
       spentAmount: number;
     }>,
   ): Promise<void> {
-    const title = 'Budget Limit Exceeded';
+    const i18n = I18nContext.current();
+    let subject = 'Budget Limit Exceeded';
+    let text = `A recent recurring payment caused you to exceed your budget limit for a category.\n\nCategory: ${mailData.data.categoryName}\nBudget Limit: ${mailData.data.budgetLimit}\nSpent Amount: ${mailData.data.spentAmount}`;
+
+    if (i18n) {
+      subject = await i18n.t('recurring-payments.budgetLimitTitle');
+      text = await i18n.t('recurring-payments.budgetLimitText', {
+        args: {
+          categoryName: mailData.data.categoryName,
+          budgetLimit: mailData.data.budgetLimit,
+          spentAmount: mailData.data.spentAmount,
+        },
+      });
+    }
+
     await this.mailerService.sendMail({
       to: mailData.to,
-      subject: title,
-      text: `A recent recurring payment caused you to exceed your budget limit for a category.\n\nCategory: ${mailData.data.categoryName}\nBudget Limit: ${mailData.data.budgetLimit}\nSpent Amount: ${mailData.data.spentAmount}`,
+      subject,
+      text,
     });
   }
 }

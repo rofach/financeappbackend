@@ -1,0 +1,10 @@
+{
+  "createdTitle": "Recurring Payment Created",
+  "createdText": "A new recurring payment has been successfully created.\n\nAmount: {amount}\nFrequency: {frequency}\nNext Execute Date: {nextDate}",
+  "processedTitle": "Recurring Payment Processed",
+  "processedText": "Your recurring payment has been successfully processed.\n\nAccount: {accountName}\nAmount: {amount}",
+  "negativeWarningTitle": "Negative Balance Warning",
+  "negativeWarningText": "A recent recurring payment caused your account balance to fall below zero. Please review your account.\n\nAccount: {accountName}\nCurrent Balance: {balance}",
+  "budgetLimitTitle": "Budget Limit Exceeded",
+  "budgetLimitText": "A recent recurring payment caused you to exceed your budget limit for a category.\n\nCategory: {categoryName}\nBudget Limit: {budgetLimit}\nSpent Amount: {spentAmount}"
+}
